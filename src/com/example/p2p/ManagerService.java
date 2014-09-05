@@ -112,15 +112,22 @@ public class ManagerService extends Service {
 	}
 	
 	private void startServer(String serverName){
+		if(mServerServiceBinder!=null){
+			mServerServiceBinder.startServer();
+		}
 		
 	}
 	
 	private void soptServer(String serverName){  
-		
+		if(mServerServiceBinder!=null){
+			mServerServiceBinder.stopServer();
+		}
 	}
 	
 	private void connectServer(String serverName){
-		
+		if(mClientServiceBinder!=null){
+//			mClientServiceBinder.connect(ip, port);
+		}
 	}
 	
 	private void findServer(){
