@@ -43,7 +43,6 @@ public class ServerService extends Service {
 
 		@Override
 		public void stopServer() {
-			// TODO Auto-generated method stub
 			
 		}
 
