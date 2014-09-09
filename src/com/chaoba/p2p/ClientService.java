@@ -1,4 +1,4 @@
-package com.example.p2p;
+package com.chaoba.p2p;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,9 +17,9 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 
-import com.example.p2p.ServerService.BackgroundHandler;
-import com.example.p2p.interf.IClientService;
-import com.example.p2p.utils.Logger;
+import com.chaoba.p2p.ServerService.BackgroundHandler;
+import com.chaoba.p2p.interf.IClientService;
+import com.chaoba.p2p.utils.Logger;
 
 public class ClientService extends Service {
 

@@ -1,4 +1,4 @@
-package com.example.p2p.interf;
+package com.chaoba.p2p.interf;
 
 public interface IClientService {
 

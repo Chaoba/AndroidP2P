@@ -1,4 +1,4 @@
-package com.example.p2p;
+package com.chaoba.p2p;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -14,8 +14,9 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 
-import com.example.p2p.AdvertiseService.AdvertiseServiceBinder;
-import com.example.p2p.ClientService.ClientServiceBinder;
+import com.chaoba.p2p.AdvertiseService.AdvertiseServiceBinder;
+import com.chaoba.p2p.ClientService.ClientServiceBinder;
+import com.example.p2p.R;
 
 public class MainActivity extends Activity implements OnClickListener {
 

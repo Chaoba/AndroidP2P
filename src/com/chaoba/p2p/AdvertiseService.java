@@ -1,13 +1,11 @@
-package com.example.p2p;
+package com.chaoba.p2p;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-
-import com.example.p2p.AdvertiseService.ListenHandler;
-import com.example.p2p.interf.IAdvertiseService;
-import com.example.p2p.utils.Logger;
+import java.util.HashMap;
 
 import android.app.Service;
 import android.content.Context;
@@ -20,6 +18,13 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.text.TextUtils;
+
+import com.chaoba.p2p.interf.IAdvertiseService;
+import com.chaoba.p2p.utils.Logger;
+import com.chaoba.p2p.utils.Util;
+
+import de.greenrobot.event.EventBus;
 
 public class AdvertiseService extends Service {
 	private static final String TAG = "AdvertiseService";
@@ -32,24 +37,28 @@ public class AdvertiseService extends Service {
 	private HandlerThread mListenHandlerThread;
 	private ListenHandler mListenHandler;
 	private static final int MULTICAST_PORT = 5111;
-	private static final String GROUP_IP = "224.5.0.7";
+	private static final String GROUP_IP = "239.5.0.7";
 	private static final String FIND = "FIND";
 	private static final String ADVERTISE = "ADVERTISE";
-
+	private HashMap<String, String> mServerMap = new HashMap<String, String>();
+	private String mServerName;
+	private EventBus eventBus;
+	private boolean mListening=true;
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		mContext = this;
+		eventBus = new EventBus();
+		eventBus.register(this);
 		mBackgroundHandlerThread = new HandlerThread(TAG);
 		mBackgroundHandlerThread.start();
 		mBackgroundHandler = new BackgroundHandler(
 				mBackgroundHandlerThread.getLooper());
-		
-		mListenHandlerThread = new HandlerThread(TAG+"/listen");
+
+		mListenHandlerThread = new HandlerThread(TAG + "/listen");
 		mListenHandlerThread.start();
-		mListenHandler = new ListenHandler(
-				mListenHandlerThread.getLooper());
-		
+		mListenHandler = new ListenHandler(mListenHandlerThread.getLooper());
+
 		allowMulticast();
 		try {
 			multicastSocket = new MulticastSocket(MULTICAST_PORT);
@@ -60,6 +69,15 @@ public class AdvertiseService extends Service {
 			e.printStackTrace();
 		}
 
+	}
+
+	@Override
+	public void onDestroy() {
+		eventBus.unregister(this);
+		if(multicastSocket!=null&&!multicastSocket.isClosed()){
+			multicastSocket.close();
+		}
+		super.onDestroy();
 	}
 
 	@Override
@@ -83,14 +101,31 @@ public class AdvertiseService extends Service {
 
 		@Override
 		public void stopListen() {
-			// TODO Auto-generated method stub
-
+			mListening=false;
+			multicastSocket.close();
 		}
 
 		@Override
 		public void find() {
 			mBackgroundHandler.sendEmptyMessage(2);
 
+		}
+
+		@Override
+		public void serverStarted(String serverName) {
+			mServerName=serverName;
+			
+		}
+
+		@Override
+		public void serverStoped() {
+			mServerName=null;
+			
+		}
+
+		@Override
+		public HashMap getServerMap() {
+			return mServerMap;
 		}
 
 	}
@@ -127,6 +162,7 @@ public class AdvertiseService extends Service {
 			Logger.d(TAG, "handlemsessage:" + msg.what);
 			switch (msg.what) {
 			case 0:
+				mListening=true;
 				Listening();
 				break;
 			default:
@@ -134,7 +170,7 @@ public class AdvertiseService extends Service {
 			}
 		}
 	}
-	
+
 	private void allowMulticast() {
 		WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		multicastLock = wifiManager.createMulticastLock("multicast.test");
@@ -142,6 +178,7 @@ public class AdvertiseService extends Service {
 	}
 
 	private void find() {
+		mServerMap.clear();
 		byte[] adv = FIND.getBytes();
 		DatagramPacket packet = new DatagramPacket(adv, adv.length, group,
 				MULTICAST_PORT);
@@ -155,7 +192,11 @@ public class AdvertiseService extends Service {
 	}
 
 	private void advertise() {
-		byte[] adv = ADVERTISE.getBytes();
+		//not start server,just return
+		if(TextUtils.isEmpty(mServerName)){
+			return;
+		}
+		byte[] adv = (ADVERTISE + File.separator + mServerName).getBytes();
 		DatagramPacket packet = new DatagramPacket(adv, adv.length, group,
 				MULTICAST_PORT);
 		try {
@@ -168,15 +209,15 @@ public class AdvertiseService extends Service {
 	}
 
 	private void Listening() {
-		while (true) {
+		while (mListening) {
 			byte[] receiveData = new byte[256];
 			DatagramPacket packet = new DatagramPacket(receiveData,
 					receiveData.length);
 			try {
-				Logger.d(TAG,"listening");
+				Logger.d(TAG, "listening");
 				multicastSocket.receive(packet);
 			} catch (IOException e) {
-				e.printStackTrace();
+				Logger.d(TAG,"stop listening thread");
 			}
 			String packetIpAddress = packet.getAddress().toString();
 			packetIpAddress = packetIpAddress.substring(1,
@@ -192,19 +233,17 @@ public class AdvertiseService extends Service {
 			}
 			String content = packetContent.toString();
 			Logger.d(TAG, "packet content is: " + content);
-			if(content.equals(FIND)){
+			if (content.equals(FIND)) {
+				//receive find request, advertise myself
 				mBackgroundHandler.sendEmptyMessage(0);
+			} else if (content.startsWith(ADVERTISE)) {
+				String[] names = content.split(File.separator);
+				if (names.length > 1) {
+					//find a server,notify manager.
+					mServerMap.put(names[1], packetIpAddress);
+					eventBus.post(Util.FIND_SERVER);
+				}
 			}
-			// if (ip.equals(packetIpAddress)) {
-			// Logger.d(TAG, "find server ip address: " + ip);
-			// break;
-			// } else {
-			// Logger.d(TAG, "not find server ip address, continue …");
-			// try {
-			// Thread.sleep(1000);
-			// } catch (InterruptedException e) {
-			// }
-			// }
 		}
 
 	}
