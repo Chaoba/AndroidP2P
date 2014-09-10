@@ -18,6 +18,7 @@ import android.os.Looper;
 import android.os.Message;
 
 import com.chaoba.p2p.interf.IServerService;
+import com.chaoba.p2p.interf.IServerServiceCallback;
 import com.chaoba.p2p.utils.Logger;
 import com.chaoba.p2p.utils.Util;
 
@@ -37,7 +38,7 @@ public class ServerService extends Service {
 	private boolean mListening;
 	private InputStream mInputStream;
 	private OutputStream mOutputStream;
-
+	private IServerServiceCallback mCallback;
 	@Override
 	public IBinder onBind(Intent intent) {
 		return new ServerServiceBinder();
@@ -69,6 +70,11 @@ public class ServerService extends Service {
 				Logger.e(TAG, "out put stream error");
 			}
 
+		}
+
+		@Override
+		public void registCallback(IServerServiceCallback callback) {
+			mCallback=callback;
 		}
 
 	}
@@ -131,6 +137,7 @@ public class ServerService extends Service {
 			InetAddress address = InetAddress.getByName(Util.getIp(mContext));
 			mSever = new ServerSocket(port, 50, address);
 			mListenHandler.sendEmptyMessage(0);
+			mCallback.serverCreated();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -149,6 +156,7 @@ public class ServerService extends Service {
 					mOutputStream = socket.getOutputStream();
 					while (!socket.isClosed()) {
 						n=mInputStream.read(buffer);
+						mCallback.receiveMessage(buffer, n);
 					}
 					Logger.d(TAG, "close");
 					socket.close();

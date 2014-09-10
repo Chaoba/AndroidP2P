@@ -84,7 +84,9 @@ public class AdvertiseService extends Service {
 	public IBinder onBind(Intent intent) {
 		return new AdvertiseServiceBinder();
 	}
-
+	public void onEvent(Integer event) {
+		Logger.d(TAG, "onEvent:" + event);
+	}
 	public class AdvertiseServiceBinder extends Binder implements
 			IAdvertiseService {
 

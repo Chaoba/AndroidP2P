@@ -1,4 +1,4 @@
-package com.chaoba.p2p;
+package com.chaoba.p2ptest;
 
 import java.util.HashMap;
 
@@ -16,10 +16,12 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.chaoba.p2p.ManagerService;
 import com.chaoba.p2p.interf.IManagerService;
 import com.chaoba.p2p.interf.IManagerServiceCallback;
+import com.chaoba.p2p.utils.Logger;
 import com.chaoba.p2p.utils.ToastManager;
-import com.chaoba.p2p.R;
+
 public class MainActivity extends Activity implements OnClickListener,
 		IManagerServiceCallback {
 
@@ -58,16 +60,14 @@ public class MainActivity extends Activity implements OnClickListener,
 				Log.d(TAG, "onServiceDisconnected");
 			}
 		};
-		bindService(
-				new Intent(getApplicationContext(), ManagerService.class),
-				mServiceConnection, Context.BIND_AUTO_CREATE);
-		
-//		ComponentName com = new ComponentName("com.chaoba.p2p",
-//				"ManagerService");
-//		Intent i = new Intent();
-//		i.setComponent(com);
-//		Logger.d(TAG,
-//				getApplicationContext().bindService(i, mServiceConnection, Context.BIND_AUTO_CREATE));
+
+		Intent i = new Intent();
+		i.setClass(mContext, ManagerService.class);
+		Logger.d(
+				TAG,
+				"bind service:"
+						+ bindService(i, mServiceConnection,
+								Context.BIND_AUTO_CREATE));
 	}
 
 	@Override
@@ -82,20 +82,20 @@ public class MainActivity extends Activity implements OnClickListener,
 		if (mManagerServiceBinder != null) {
 			int id = v.getId();
 			switch (id) {
-//			case R.id.create_server:
-//				mManagerServiceBinder.startServer("test server");
-//				break;
-//			case R.id.connect_server:
-//				mManagerServiceBinder.connectServer(mEdit.getEditableText()
-//						.toString());
-//				break;
-//			case R.id.send:
-//				mManagerServiceBinder.sendMessage(mMessageEdit
-//						.getEditableText().toString());
-//				break;
-//			case R.id.find:
-//				mManagerServiceBinder.findServer();
-//				break;
+			case R.id.create_server:
+				mManagerServiceBinder.startServer("test server");
+				break;
+			case R.id.connect_server:
+				mManagerServiceBinder.connectServer(mEdit.getEditableText()
+						.toString());
+				break;
+			case R.id.send:
+				mManagerServiceBinder.sendMessage(mMessageEdit
+						.getEditableText().toString());
+				break;
+			case R.id.find:
+				mManagerServiceBinder.findServer();
+				break;
 			}
 		}
 	}

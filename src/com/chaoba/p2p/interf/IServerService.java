@@ -5,5 +5,5 @@ public interface IServerService {
 	public void startServer();
 	public void stopServer();
 	public void send(byte[] sendMessage);
-	
+	public void registCallback(IServerServiceCallback callback);
 }
