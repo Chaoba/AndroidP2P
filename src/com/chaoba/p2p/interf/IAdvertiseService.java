@@ -11,4 +11,6 @@ public interface IAdvertiseService {
 	public void serverStarted(String serverName);
 	public void serverStoped();
 	public HashMap getServerMap();
+	public void registCallback(IAdvertiseServiceCallback callback);
+	public void UnregistCallback();
 }

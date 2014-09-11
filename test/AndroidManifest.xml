@@ -3,7 +3,12 @@
     package="com.chaoba.p2ptest"
     android:versionCode="1"
     android:versionName="1.0" >
-
+   <uses-permission android:name="android.permission.INTERNET" >
+    </uses-permission>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-sdk
         android:minSdkVersion="8"
         android:targetSdkVersion="18" />
@@ -24,6 +29,12 @@
         </activity>
 
         <service android:name="com.chaoba.p2p.ManagerService" />
+          <service android:name="com.chaoba.p2p.ServerService" >
+        </service>
+        <service android:name="com.chaoba.p2p.ClientService" >
+        </service>
+        <service android:name="com.chaoba.p2p.AdvertiseService" >
+        </service>
     </application>
 
 </manifest>

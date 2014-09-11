@@ -35,6 +35,7 @@ public class ClientService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		Logger.d(TAG,"oncreate");
 		mContext = this;
 		mBackgroundHandlerThread = new HandlerThread(TAG);
 		mBackgroundHandlerThread.start();

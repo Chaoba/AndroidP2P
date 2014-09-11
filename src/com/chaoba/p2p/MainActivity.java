@@ -1,7 +1,5 @@
 package com.chaoba.p2p;
 
-import java.util.HashMap;
-
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -18,8 +16,8 @@ import android.widget.EditText;
 
 import com.chaoba.p2p.interf.IManagerService;
 import com.chaoba.p2p.interf.IManagerServiceCallback;
+import com.chaoba.p2p.utils.Logger;
 import com.chaoba.p2p.utils.ToastManager;
-import com.chaoba.p2p.R;
 public class MainActivity extends Activity implements OnClickListener,
 		IManagerServiceCallback {
 
@@ -103,6 +101,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	@Override
 	public void receiveMessage(byte[] receMeg, int size) {
 		String s = new String(receMeg);
+		Logger.d(TAG,"receive message:"+s);
 		ToastManager.show(mContext, s);
 	}
 
@@ -111,10 +110,11 @@ public class MainActivity extends Activity implements OnClickListener,
 		ToastManager.show(mContext, "Create server Ok!");
 	}
 
+
 	@Override
-	public void updateServerMap(HashMap map) {
-		String s = (String) map.keySet().iterator().next();
-		mEdit.setText(s);
+	public void updateServer(String serverName) {
+		Logger.d(TAG,"update server:"+serverName);
+		mEdit.setText(serverName);
 	}
 
 }

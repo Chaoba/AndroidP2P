@@ -21,10 +21,9 @@ import android.os.Message;
 import android.text.TextUtils;
 
 import com.chaoba.p2p.interf.IAdvertiseService;
+import com.chaoba.p2p.interf.IAdvertiseServiceCallback;
 import com.chaoba.p2p.utils.Logger;
 import com.chaoba.p2p.utils.Util;
-
-import de.greenrobot.event.EventBus;
 
 public class AdvertiseService extends Service {
 	private static final String TAG = "AdvertiseService";
@@ -42,14 +41,13 @@ public class AdvertiseService extends Service {
 	private static final String ADVERTISE = "ADVERTISE";
 	private HashMap<String, String> mServerMap = new HashMap<String, String>();
 	private String mServerName;
-	private EventBus eventBus;
 	private boolean mListening=true;
+	private IAdvertiseServiceCallback mCallback;
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		Logger.d(TAG,"oncreate");
 		mContext = this;
-		eventBus = new EventBus();
-		eventBus.register(this);
 		mBackgroundHandlerThread = new HandlerThread(TAG);
 		mBackgroundHandlerThread.start();
 		mBackgroundHandler = new BackgroundHandler(
@@ -68,12 +66,11 @@ public class AdvertiseService extends Service {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		mListenHandler.sendEmptyMessage(0);
 	}
 
 	@Override
 	public void onDestroy() {
-		eventBus.unregister(this);
 		if(multicastSocket!=null&&!multicastSocket.isClosed()){
 			multicastSocket.close();
 		}
@@ -84,9 +81,11 @@ public class AdvertiseService extends Service {
 	public IBinder onBind(Intent intent) {
 		return new AdvertiseServiceBinder();
 	}
+	
 	public void onEvent(Integer event) {
 		Logger.d(TAG, "onEvent:" + event);
 	}
+	
 	public class AdvertiseServiceBinder extends Binder implements
 			IAdvertiseService {
 
@@ -128,6 +127,18 @@ public class AdvertiseService extends Service {
 		@Override
 		public HashMap getServerMap() {
 			return mServerMap;
+		}
+
+		@Override
+		public void registCallback(IAdvertiseServiceCallback callback) {
+			mCallback=callback;
+			
+		}
+
+		@Override
+		public void UnregistCallback() {
+			mCallback=null;
+			
 		}
 
 	}
@@ -224,7 +235,7 @@ public class AdvertiseService extends Service {
 			String packetIpAddress = packet.getAddress().toString();
 			packetIpAddress = packetIpAddress.substring(1,
 					packetIpAddress.length());
-			Logger.d(TAG, "packet ip address: " + packetIpAddress);
+			Logger.d(TAG, "target ip address: " + packetIpAddress);
 
 			StringBuilder packetContent = new StringBuilder();
 			for (int i = 0; i < receiveData.length; i++) {
@@ -234,7 +245,7 @@ public class AdvertiseService extends Service {
 				packetContent.append((char) receiveData[i]);
 			}
 			String content = packetContent.toString();
-			Logger.d(TAG, "packet content is: " + content);
+			Logger.d(TAG, "target command is: " + content);
 			if (content.equals(FIND)) {
 				//receive find request, advertise myself
 				mBackgroundHandler.sendEmptyMessage(0);
@@ -243,7 +254,9 @@ public class AdvertiseService extends Service {
 				if (names.length > 1) {
 					//find a server,notify manager.
 					mServerMap.put(names[1], packetIpAddress);
-					eventBus.post(Util.FIND_SERVER);
+					if(mCallback!=null){
+						mCallback.serverFound(names[1]);
+					}
 				}
 			}
 		}

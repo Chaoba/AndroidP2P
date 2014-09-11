@@ -82,6 +82,7 @@ public class ServerService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		Logger.d(TAG,"oncreate");
 		mContext = this;
 		mBackgroundHandlerThread = new HandlerThread(TAG);
 		mBackgroundHandlerThread.start();
@@ -105,6 +106,8 @@ public class ServerService extends Service {
 			case 0:
 				createServer(8000);
 				break;
+			case 1:
+				mCallback.serverCreated();
 			default:
 				break;
 			}
@@ -137,7 +140,7 @@ public class ServerService extends Service {
 			InetAddress address = InetAddress.getByName(Util.getIp(mContext));
 			mSever = new ServerSocket(port, 50, address);
 			mListenHandler.sendEmptyMessage(0);
-			mCallback.serverCreated();
+			mBackgroundHandler.sendEmptyMessageDelayed(1, 1000);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -151,11 +154,13 @@ public class ServerService extends Service {
 			try {
 				Logger.d(TAG, "listening:" + mSever.getInetAddress());
 				final Socket socket = mSever.accept();
+				Logger.d(TAG,"accept client:");
 				try {
 					mInputStream = socket.getInputStream();
 					mOutputStream = socket.getOutputStream();
 					while (!socket.isClosed()) {
 						n=mInputStream.read(buffer);
+						Logger.d(TAG,"read n:"+n);
 						mCallback.receiveMessage(buffer, n);
 					}
 					Logger.d(TAG, "close");

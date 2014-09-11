@@ -13,20 +13,18 @@ import android.os.IBinder;
 import android.os.Message;
 import android.util.Log;
 
-import cn.com.carsmart.saman.communication.IMessageServer;
-
 import com.chaoba.p2p.AdvertiseService.AdvertiseServiceBinder;
 import com.chaoba.p2p.ClientService.ClientServiceBinder;
 import com.chaoba.p2p.ServerService.ServerServiceBinder;
+import com.chaoba.p2p.interf.IAdvertiseServiceCallback;
 import com.chaoba.p2p.interf.IManagerService;
 import com.chaoba.p2p.interf.IManagerServiceCallback;
 import com.chaoba.p2p.interf.IServerServiceCallback;
 import com.chaoba.p2p.utils.Logger;
 import com.chaoba.p2p.utils.Util;
 
-import de.greenrobot.event.EventBus;
-
-public class ManagerService extends Service implements IServerServiceCallback {
+public class ManagerService extends Service implements IServerServiceCallback,
+		IAdvertiseServiceCallback {
 	private static final String TAG = "ManagerService";
 	private Context mContext;
 	private ServiceConnection mClientServiceConnection;
@@ -37,26 +35,23 @@ public class ManagerService extends Service implements IServerServiceCallback {
 
 	private ServiceConnection mAdvertiseServiceConnection;
 	protected AdvertiseServiceBinder mAdvertiseServiceBinder;
-	private EventBus eventBus;
 	private HashMap<String, String> mServerMap = new HashMap<String, String>();
 	private String mServerName;
 	private String mServerNameToConnect;
 	private IManagerServiceCallback mCallback;
 	private boolean isServer;
+
 	@Override
 	public IBinder onBind(Intent intent) {
-		Logger.d(TAG,"onbind");
+		Logger.d(TAG, "onbind");
 		return new ManagerServiceBinder();
 	}
 
-	private final IManagerService.Stub mBinder = new IMessageServer.Stub() {
-		
-	}
 	public class ManagerServiceBinder extends Binder implements IManagerService {
-
 		@Override
 		public void startServer(String serverName) {
-			isServer=true;
+			Logger.d(TAG, "startserver:" + serverName);
+			isServer = true;
 			mServerName = serverName;
 			bindServerService();
 			bindAdvertiseService();
@@ -76,7 +71,7 @@ public class ManagerService extends Service implements IServerServiceCallback {
 
 		@Override
 		public void connectServer(String serverName) {
-			isServer=false;
+			isServer = false;
 			mServerNameToConnect = serverName;
 			bindClientService();
 
@@ -84,39 +79,38 @@ public class ManagerService extends Service implements IServerServiceCallback {
 
 		@Override
 		public void registCallback(IManagerServiceCallback callback) {
-			mCallback=callback;
-			
+			mCallback = callback;
+
 		}
 
 		@Override
 		public void unRegistCallback() {
-			mCallback=null;
-			
+			mCallback = null;
+
 		}
 
 		@Override
 		public void sendMessage(String message) {
 			sendMess(message);
-			
+
 		}
 
-	}
+	};
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		Logger.d(TAG,"onCreate");
+		Logger.d(TAG, "onCreate");
 		mContext = this;
-		eventBus = new EventBus();
-		eventBus.register(this);
 
 		mClientServiceConnection = new ServiceConnection() {
 			@Override
 			public void onServiceConnected(ComponentName name, IBinder service) {
 				Log.d(TAG, "mClientServiceConnection onServiceConnected");
 				mClientServiceBinder = (ClientServiceBinder) service;
-				//if bind to clientService, means user want to connect one server, so connect it directly.
-				
+				// if bind to clientService, means user want to connect one
+				// server, so connect it directly.
+
 				if (mServerNameToConnect != null) {
 					connectServer(mServerNameToConnect);
 				}
@@ -152,11 +146,13 @@ public class ManagerService extends Service implements IServerServiceCallback {
 				Log.d(TAG,
 						"mAdvertiseServiceConnection onAdvertiseServiceConnected");
 				mAdvertiseServiceBinder = (AdvertiseServiceBinder) service;
+				mAdvertiseServiceBinder.registCallback(ManagerService.this);
 			}
 
 			@Override
 			public void onServiceDisconnected(ComponentName name) {
 				Log.d(TAG, "mAdvertiseServiceConnection onServiceDisconnected");
+				mAdvertiseServiceBinder.UnregistCallback();
 				mAdvertiseServiceBinder = null;
 			}
 		};
@@ -165,7 +161,6 @@ public class ManagerService extends Service implements IServerServiceCallback {
 
 	@Override
 	public void onDestroy() {
-		eventBus.unregister(this);
 		super.onDestroy();
 	}
 
@@ -183,40 +178,46 @@ public class ManagerService extends Service implements IServerServiceCallback {
 		Logger.d(TAG, "onEvent:" + event);
 		switch (event) {
 		case Util.FIND_SERVER:
-			//a new server was found, so update server list
+			// a new server was found, so update server list
 			mServerMap = mAdvertiseServiceBinder.getServerMap();
-			mCallback.updateServerMap(mServerMap);
+			mCallback.updateServer(mServerMap.keySet().iterator().next());
 			break;
 		}
 	}
-	private void sendMess(String message){
-		if(isServer){
+
+	private void sendMess(String message) {
+		if (isServer) {
 			mServerServiceBinder.send(message.getBytes());
-		}else{
+		} else {
 			mClientServiceBinder.sendMessage(message);
 		}
 	}
+
 	private void bindAdvertiseService() {
 		if (mAdvertiseServiceBinder == null) {
-			bindService(new Intent(getApplicationContext(),
-					AdvertiseService.class), mAdvertiseServiceConnection,
-					Context.BIND_AUTO_CREATE);
+			boolean bindAdvertise = bindService(new Intent(
+					getApplicationContext(), AdvertiseService.class),
+					mAdvertiseServiceConnection, Context.BIND_AUTO_CREATE);
+			Logger.d(TAG, "bindAdvertise:" + bindAdvertise);
 		}
 	}
 
 	private void bindClientService() {
 		if (mClientServiceBinder == null) {
-			bindService(
-					new Intent(getApplicationContext(), ClientService.class),
-					mClientServiceConnection, Context.BIND_AUTO_CREATE);
+			boolean bindClient = bindService(new Intent(mContext,
+					ClientService.class), mClientServiceConnection,
+					Context.BIND_AUTO_CREATE);
+			Logger.d(TAG, "bindServer:" + bindClient);
 		}
 	}
 
 	private void bindServerService() {
 		if (mServerServiceBinder == null) {
-			bindService(
-					new Intent(getApplicationContext(), ServerService.class),
-					mServerServiceConnection, Context.BIND_AUTO_CREATE);
+			Intent i = new Intent();
+			i.setClass(mContext, ServerService.class);
+			boolean bindServer = bindService(i, mServerServiceConnection,
+					Context.BIND_AUTO_CREATE);
+			Logger.d(TAG, "bindServer:" + bindServer);
 		}
 	}
 
@@ -243,7 +244,7 @@ public class ManagerService extends Service implements IServerServiceCallback {
 	}
 
 	private void findServer() {
-		if(mAdvertiseServiceBinder!=null){
+		if (mAdvertiseServiceBinder != null) {
 			mAdvertiseServiceBinder.find();
 		}
 	}
@@ -258,6 +259,14 @@ public class ManagerService extends Service implements IServerServiceCallback {
 	public void serverCreated() {
 		mAdvertiseServiceBinder.serverStarted(mServerName);
 		mAdvertiseServiceBinder.advertise();
+	}
+
+	@Override
+	public void serverFound(String serverName) {
+		Logger.d(TAG,"find server:"+serverName);
+		// a new server was found, so update server list
+		mServerMap = mAdvertiseServiceBinder.getServerMap();
+		mCallback.updateServer(serverName);
 	}
 
 }

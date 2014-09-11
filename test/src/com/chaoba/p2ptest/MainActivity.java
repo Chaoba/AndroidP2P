@@ -1,14 +1,14 @@
 package com.chaoba.p2ptest;
 
-import java.util.HashMap;
-
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -53,14 +53,18 @@ public class MainActivity extends Activity implements OnClickListener,
 			public void onServiceConnected(ComponentName name, IBinder service) {
 				Log.d(TAG, "onServiceConnected");
 				mManagerServiceBinder = (IManagerService) service;
+				mManagerServiceBinder.registCallback(MainActivity.this);
 			}
 
 			@Override
 			public void onServiceDisconnected(ComponentName name) {
 				Log.d(TAG, "onServiceDisconnected");
+				mManagerServiceBinder.unRegistCallback();
+				mManagerServiceBinder=null;
 			}
 		};
 
+		// Intent i = new Intent("com.chaoba.p2p.interf.IManagerService");
 		Intent i = new Intent();
 		i.setClass(mContext, ManagerService.class);
 		Logger.d(
@@ -70,6 +74,15 @@ public class MainActivity extends Activity implements OnClickListener,
 								Context.BIND_AUTO_CREATE));
 	}
 
+	private Handler mHandler=new Handler(){
+		 public void handleMessage(Message msg) {
+			 switch(msg.what){
+			 case 0:
+				 String text=(String) msg.obj;
+				 mEdit.setText(text);
+			 }
+		    }
+	};
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -95,6 +108,7 @@ public class MainActivity extends Activity implements OnClickListener,
 				break;
 			case R.id.find:
 				mManagerServiceBinder.findServer();
+				mEdit.setText("");
 				break;
 			}
 		}
@@ -102,7 +116,8 @@ public class MainActivity extends Activity implements OnClickListener,
 
 	@Override
 	public void receiveMessage(byte[] receMeg, int size) {
-		String s = new String(receMeg);
+		String s = new String(receMeg,0,size);
+		Logger.d(TAG,"receive message:"+s);
 		ToastManager.show(mContext, s);
 	}
 
@@ -112,9 +127,13 @@ public class MainActivity extends Activity implements OnClickListener,
 	}
 
 	@Override
-	public void updateServerMap(HashMap map) {
-		String s = (String) map.keySet().iterator().next();
-		mEdit.setText(s);
+	public void updateServer(String s) {
+		Logger.d(TAG,"updateServer:"+s);
+		Message msg=mHandler.obtainMessage();
+		msg.what=0;
+		msg.obj=s;
+		mHandler.sendMessage(msg);
+
 	}
 
 }

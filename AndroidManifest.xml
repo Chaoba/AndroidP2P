@@ -16,7 +16,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <application>
-          <activity
+        <activity
             android:name="com.chaoba.p2p.MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
@@ -25,9 +25,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-        <service android:name="com.chaoba.p2p.ManagerService" 
-            android:exported="true">
+
+        <service
+            android:name="com.chaoba.p2p.ManagerService">
         </service>
         <service android:name="com.chaoba.p2p.ServerService" >
         </service>
