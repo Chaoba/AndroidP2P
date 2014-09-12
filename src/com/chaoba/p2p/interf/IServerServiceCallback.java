@@ -4,5 +4,7 @@ public interface IServerServiceCallback {
 
 	public void receiveMessage(byte[] receMeg, int size);
 	public void serverCreated();
+	public void acceptClient();
+	
 	
 }

@@ -39,6 +39,7 @@ public class ServerService extends Service {
 	private InputStream mInputStream;
 	private OutputStream mOutputStream;
 	private IServerServiceCallback mCallback;
+
 	@Override
 	public IBinder onBind(Intent intent) {
 		return new ServerServiceBinder();
@@ -55,26 +56,21 @@ public class ServerService extends Service {
 		@Override
 		public void stopServer() {
 			mListening = false;
-			try {
-				mSever.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			stopServ();
 		}
 
 		@Override
-		public void send(byte[] sendMessage) {
-			try {
-				mOutputStream.write(sendMessage);
-			} catch (IOException e) {
-				Logger.e(TAG, "out put stream error");
-			}
+		public void send(String sendMessage) {
+			Message msg = mBackgroundHandler.obtainMessage();
+			msg.what = 2;
+			msg.obj = sendMessage;
+			mBackgroundHandler.sendMessageDelayed(msg, Util.SEND_MESSAGE_DELAY);
 
 		}
 
 		@Override
 		public void registCallback(IServerServiceCallback callback) {
-			mCallback=callback;
+			mCallback = callback;
 		}
 
 	}
@@ -82,7 +78,7 @@ public class ServerService extends Service {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		Logger.d(TAG,"oncreate");
+		Logger.d(TAG, "oncreate");
 		mContext = this;
 		mBackgroundHandlerThread = new HandlerThread(TAG);
 		mBackgroundHandlerThread.start();
@@ -92,6 +88,23 @@ public class ServerService extends Service {
 		mListenHandlerThread = new HandlerThread(TAG + "/listen");
 		mListenHandlerThread.start();
 		mListenHandler = new ListenHandler(mListenHandlerThread.getLooper());
+	}
+
+	@Override
+	public void onDestroy() {
+		Logger.d(TAG,"onDestroy");
+		stopServ();
+		super.onDestroy();
+	}
+
+	private void stopServ() {
+		if (!mSever.isClosed()) {
+			try {
+				mSever.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public class BackgroundHandler extends Handler {
@@ -108,6 +121,16 @@ public class ServerService extends Service {
 				break;
 			case 1:
 				mCallback.serverCreated();
+				break;
+			case 2:
+				try {
+					String s = (String) msg.obj;
+					mOutputStream.write(s.getBytes());
+					mOutputStream.flush();
+				} catch (IOException e) {
+					Logger.e(TAG, "out put stream error");
+				}
+				break;
 			default:
 				break;
 			}
@@ -148,28 +171,26 @@ public class ServerService extends Service {
 
 	public void beginListen() {
 		mListening = true;
-		byte[] buffer=new byte[Util.BUFFER_SIZE];
-		int n=0;
+		byte[] buffer = new byte[Util.BUFFER_SIZE];
+		int n = 0;
 		while (mListening) {
 			try {
 				Logger.d(TAG, "listening:" + mSever.getInetAddress());
 				final Socket socket = mSever.accept();
-				Logger.d(TAG,"accept client:");
-				try {
-					mInputStream = socket.getInputStream();
-					mOutputStream = socket.getOutputStream();
-					while (!socket.isClosed()) {
-						n=mInputStream.read(buffer);
-						Logger.d(TAG,"read n:"+n);
-						mCallback.receiveMessage(buffer, n);
-					}
-					Logger.d(TAG, "close");
-					socket.close();
-				} catch (IOException e) {
-					e.printStackTrace();
+				Logger.d(TAG, "accept client:");
+				mCallback.acceptClient();
+				mInputStream = socket.getInputStream();
+				mOutputStream = socket.getOutputStream();
+				while (!socket.isClosed()) {
+					n = mInputStream.read(buffer);
+					Logger.d(TAG, "read n:" + n);
+					mCallback.receiveMessage(buffer, n);
 				}
+				Logger.d(TAG, "close");
+				socket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
+				mListening=false;
 			}
 		}
 	}

@@ -9,11 +9,10 @@ public class Util {
 
 	public static final int PORT = 8000;
 	public static final int BUFFER_SIZE = 1024 * 4;
-
+	public static final int SEND_MESSAGE_DELAY=200;
 	public static String getIp(Context c) {
 		WifiManager wifiManager = (WifiManager) c
 				.getSystemService(Context.WIFI_SERVICE);
-		// 判断wifi是否开启
 		if (!wifiManager.isWifiEnabled()) {
 			wifiManager.setWifiEnabled(true);
 		}

@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import com.chaoba.p2p.ManagerService;
 import com.chaoba.p2p.interf.IManagerService;
@@ -28,6 +29,7 @@ public class MainActivity extends Activity implements OnClickListener,
 	protected static final String TAG = "MainActivity";
 	Button mCreateButton, mConnectButton, mSendButton, mFindButton;
 	EditText mEdit, mMessageEdit;
+	TextView mLog;
 	private Context mContext;
 	private ServiceConnection mServiceConnection;
 	protected IManagerService mManagerServiceBinder;
@@ -43,7 +45,7 @@ public class MainActivity extends Activity implements OnClickListener,
 		mFindButton = (Button) findViewById(R.id.find);
 		mEdit = (EditText) findViewById(R.id.server_name);
 		mMessageEdit = (EditText) findViewById(R.id.message_edit);
-
+		mLog=(TextView) findViewById(R.id.log);
 		mCreateButton.setOnClickListener(this);
 		mConnectButton.setOnClickListener(this);
 		mSendButton.setOnClickListener(this);
@@ -80,9 +82,21 @@ public class MainActivity extends Activity implements OnClickListener,
 			 case 0:
 				 String text=(String) msg.obj;
 				 mEdit.setText(text);
+				 break;
+			 case 1:
+				 text=(String) msg.obj;
+				 mLog.setText(mLog.getText()+"\n"+text);
 			 }
 		    }
 	};
+	
+	@Override
+	public void onDestroy() {
+		Logger.d(TAG,"onDestroy");
+		unbindService(mServiceConnection);
+		super.onDestroy();
+	}
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -103,8 +117,13 @@ public class MainActivity extends Activity implements OnClickListener,
 						.toString());
 				break;
 			case R.id.send:
-				mManagerServiceBinder.sendMessage(mMessageEdit
-						.getEditableText().toString());
+				String s=mMessageEdit
+						.getEditableText().toString();
+				mManagerServiceBinder.sendMessage(s);
+				Message msg=mHandler.obtainMessage();
+				msg.what=1;
+				msg.obj="me:"+s;
+				mHandler.sendMessage(msg);
 				break;
 			case R.id.find:
 				mManagerServiceBinder.findServer();
@@ -115,25 +134,47 @@ public class MainActivity extends Activity implements OnClickListener,
 	}
 
 	@Override
-	public void receiveMessage(byte[] receMeg, int size) {
-		String s = new String(receMeg,0,size);
+	public void receiveMessage(String s) {
 		Logger.d(TAG,"receive message:"+s);
-		ToastManager.show(mContext, s);
+		Message msg=mHandler.obtainMessage();
+		msg.what=1;
+		msg.obj="receive message:"+s;
+		mHandler.sendMessage(msg);
 	}
 
 	@Override
 	public void serverCreated() {
-		ToastManager.show(mContext, "Create server Ok!");
+		Message msg=mHandler.obtainMessage();
+		msg.what=1;
+		msg.obj="server created Ok!";
+		mHandler.sendMessage(msg);
 	}
 
 	@Override
 	public void updateServer(String s) {
 		Logger.d(TAG,"updateServer:"+s);
+		ToastManager.show(mContext, "find server:"+s);
 		Message msg=mHandler.obtainMessage();
 		msg.what=0;
 		msg.obj=s;
 		mHandler.sendMessage(msg);
 
+	}
+
+	@Override
+	public void connectToServer() {
+		Message msg=mHandler.obtainMessage();
+		msg.what=1;
+		msg.obj="connect to server Ok!";
+		mHandler.sendMessage(msg);
+	}
+
+	@Override
+	public void acceptClient() {
+		Message msg=mHandler.obtainMessage();
+		msg.what=1;
+		msg.obj="acceptClient Ok!";
+		mHandler.sendMessage(msg);
 	}
 
 }

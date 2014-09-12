@@ -71,6 +71,7 @@ public class AdvertiseService extends Service {
 
 	@Override
 	public void onDestroy() {
+		Logger.d(TAG,"onDestroy");
 		if(multicastSocket!=null&&!multicastSocket.isClosed()){
 			multicastSocket.close();
 		}
@@ -231,6 +232,7 @@ public class AdvertiseService extends Service {
 				multicastSocket.receive(packet);
 			} catch (IOException e) {
 				Logger.d(TAG,"stop listening thread");
+				break;
 			}
 			String packetIpAddress = packet.getAddress().toString();
 			packetIpAddress = packetIpAddress.substring(1,

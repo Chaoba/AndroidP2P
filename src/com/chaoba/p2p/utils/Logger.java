@@ -2,21 +2,10 @@ package com.chaoba.p2p.utils;
 
 import android.util.Log;
 
-/**
- * 封装打印类，主要是为了更好的控制打印
- * 
- * @author liyanshun
- * 
- */
 public class Logger {
-	/** 打印log的开关 */
 	private static final boolean IS_DEBUG = true;
-	// 内部断定是否显示log信息
 	private static boolean mIsInnerShowLog = IS_DEBUG;
 
-	/**
-	 * 得到被打印的文件名行数等信息
-	 */
 	private static String getFunctionName() {
 		StackTraceElement[] sts = Thread.currentThread().getStackTrace();
 		if (sts == null) {
