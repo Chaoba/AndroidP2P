@@ -1,6 +1,5 @@
 package com.chaoba.p2p.interf;
-public interface IManagerServiceCallback { 
-	public void receiveMessage(String message);
+public interface IManagerServiceCallback  extends IFatherCallback{ 
 	public void serverCreated();
 	public void updateServer(String serverName);
 	public void connectToServer();

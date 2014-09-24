@@ -1,6 +1,8 @@
 package com.chaoba.p2p;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import android.app.Service;
 import android.content.ComponentName;
@@ -41,6 +43,8 @@ public class ManagerService extends Service implements IServerServiceCallback,
 	private String mServerNameToConnect;
 	private IManagerServiceCallback mCallback;
 	private boolean isServer, mBindServer, mBindAdvertise, mBindClient;
+	private Iterator<String> mFilesToSent;
+	public boolean mOpenFileServer;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -50,10 +54,11 @@ public class ManagerService extends Service implements IServerServiceCallback,
 
 	public class ManagerServiceBinder extends Binder implements IManagerService {
 		@Override
-		public void startServer(String serverName) {
+		public void startServer(String serverName,boolean openFileServer) {
 			Logger.d(TAG, "startserver:" + serverName);
 			isServer = true;
 			mServerName = serverName;
+			mOpenFileServer=openFileServer;
 			bindServerService();
 			bindAdvertiseService();
 		}
@@ -71,7 +76,7 @@ public class ManagerService extends Service implements IServerServiceCallback,
 		}
 
 		@Override
-		public void connectServer(String serverName) {
+		public void connectServer(String serverName,boolean connectFileServer) {
 			isServer = false;
 			mServerNameToConnect = serverName;
 			bindClientService();
@@ -94,6 +99,17 @@ public class ManagerService extends Service implements IServerServiceCallback,
 		public void sendMessage(String message) {
 			sendMess(message);
 
+		}
+
+		@Override
+		public void unConnectServer() {
+			ManagerService.this.unConnectServer();
+		}
+
+		@Override
+		public void sendFiles(ArrayList<String> filePaths) {
+			mFilesToSent = filePaths.iterator();
+			sendNextFile();
 		}
 
 	};
@@ -134,7 +150,7 @@ public class ManagerService extends Service implements IServerServiceCallback,
 				Log.d(TAG, "mServerServiceConnection onServiceConnected");
 				mServerServiceBinder = (ServerServiceBinder) service;
 				mServerServiceBinder.registCallback(ManagerService.this);
-				startServer();
+				startServer(mOpenFileServer);
 				mBindServer = true;
 			}
 
@@ -167,9 +183,23 @@ public class ManagerService extends Service implements IServerServiceCallback,
 
 	}
 
+	public void sendNextFile() {
+		if (mFilesToSent.hasNext()) {
+			String filePath = mFilesToSent.next();
+			ArrayList<String> file = new ArrayList<String>();
+			file.add(filePath);
+			if (isServer) {
+				mServerServiceBinder.sendFiles(file);
+			} else {
+				mClientServiceBinder.sendFiles(file);
+			}
+		}
+
+	}
+
 	@Override
 	public void onDestroy() {
-		Logger.d(TAG,"onDestroy");
+		Logger.d(TAG, "onDestroy");
 		if (mBindAdvertise) {
 			unbindService(mAdvertiseServiceConnection);
 		}
@@ -194,7 +224,7 @@ public class ManagerService extends Service implements IServerServiceCallback,
 
 	private void sendMess(String message) {
 		if (isServer) {
-			mServerServiceBinder.send(message);
+			mServerServiceBinder.sendMessage(message);
 		} else {
 			mClientServiceBinder.sendMessage(message);
 		}
@@ -228,9 +258,9 @@ public class ManagerService extends Service implements IServerServiceCallback,
 		}
 	}
 
-	private void startServer() {
+	private void startServer(boolean openFileServer) {
 		if (mServerServiceBinder != null) {
-			mServerServiceBinder.startServer();
+			mServerServiceBinder.startServer(openFileServer);
 		}
 
 	}
@@ -245,8 +275,14 @@ public class ManagerService extends Service implements IServerServiceCallback,
 		if (mClientServiceBinder != null) {
 			String ip = mServerMap.get(serverName);
 			if (ip != null) {
-				mClientServiceBinder.connect(ip, Util.PORT);
+				mClientServiceBinder.connectMessageServer(ip, Util.MESSAGE_PORT);
 			}
+		}
+	}
+
+	private void unConnectServer() {
+		if (mClientServiceBinder != null) {
+			mClientServiceBinder.unConnect();
 		}
 	}
 
@@ -257,12 +293,8 @@ public class ManagerService extends Service implements IServerServiceCallback,
 	}
 
 	@Override
-	public void receiveMessage(byte[] receMeg, int size) {
-		if(size>0){
-		String s = new String(receMeg, 0, size);
-		mCallback.receiveMessage(s);
-		}
-
+	public void receiveMessage(String message) {
+		mCallback.receiveMessage(message);
 	}
 
 	@Override
@@ -280,11 +312,6 @@ public class ManagerService extends Service implements IServerServiceCallback,
 		mCallback.updateServer(serverName);
 	}
 
-	@Override
-	public void receiveClientMessage(byte[] buffer, int n) {
-		String s = new String(buffer, 0, n);
-		mCallback.receiveMessage(s);
-	}
 
 	@Override
 	public void connectToServer() {
@@ -296,6 +323,14 @@ public class ManagerService extends Service implements IServerServiceCallback,
 	public void acceptClient() {
 		mCallback.acceptClient();
 
+	}
+
+	@Override
+	public void updateFilePercent(String FileName, int percent) {
+		mCallback.updateFilePercent(FileName, percent);
+		if (percent == 100) {
+			sendNextFile();
+		}
 	}
 
 }
