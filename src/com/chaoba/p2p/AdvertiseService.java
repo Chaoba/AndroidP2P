@@ -27,6 +27,10 @@ import com.chaoba.p2p.utils.Util;
 
 public class AdvertiseService extends Service {
 	private static final String TAG = "AdvertiseService";
+	private static final int FIND_MESSAGE=0;
+	private static final int ADVERTISE_MESSAGE=1;
+	private static final int LISTEN_MESSAGE=2;
+	private static final int FIND_DELAY=3000;
 	private Context mContext;
 	private HandlerThread mBackgroundHandlerThread;
 	private BackgroundHandler mBackgroundHandler;
@@ -66,7 +70,7 @@ public class AdvertiseService extends Service {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		mListenHandler.sendEmptyMessage(0);
+		mListenHandler.sendEmptyMessage(LISTEN_MESSAGE);
 	}
 
 	@Override
@@ -75,6 +79,7 @@ public class AdvertiseService extends Service {
 		if(multicastSocket!=null&&!multicastSocket.isClosed()){
 			multicastSocket.close();
 		}
+		mBackgroundHandler.removeMessages(FIND_MESSAGE);
 		super.onDestroy();
 	}
 
@@ -92,13 +97,13 @@ public class AdvertiseService extends Service {
 
 		@Override
 		public void advertise() {
-			mBackgroundHandler.sendEmptyMessage(0);
+			mBackgroundHandler.sendEmptyMessage(ADVERTISE_MESSAGE);
 
 		}
 
 		@Override
 		public void listen() {
-			mListenHandler.sendEmptyMessage(0);
+			mListenHandler.sendEmptyMessage(LISTEN_MESSAGE);
 		}
 
 		@Override
@@ -109,7 +114,7 @@ public class AdvertiseService extends Service {
 
 		@Override
 		public void find() {
-			mBackgroundHandler.sendEmptyMessage(2);
+			mBackgroundHandler.sendEmptyMessage(FIND_MESSAGE);
 
 		}
 
@@ -154,11 +159,12 @@ public class AdvertiseService extends Service {
 		public void handleMessage(Message msg) {
 			Logger.d(TAG, "handlemsessage:" + msg.what);
 			switch (msg.what) {
-			case 0:
+			case ADVERTISE_MESSAGE:
 				advertise();
 				break;
-			case 2:
+			case FIND_MESSAGE:
 				find();
+				mBackgroundHandler.sendEmptyMessageDelayed(FIND_MESSAGE,FIND_DELAY);
 			default:
 				break;
 			}
@@ -175,7 +181,7 @@ public class AdvertiseService extends Service {
 		public void handleMessage(Message msg) {
 			Logger.d(TAG, "handlemsessage:" + msg.what);
 			switch (msg.what) {
-			case 0:
+			case LISTEN_MESSAGE:
 				mListening=true;
 				Listening();
 				break;
@@ -250,7 +256,7 @@ public class AdvertiseService extends Service {
 			Logger.d(TAG, "target command is: " + content);
 			if (content.equals(FIND)) {
 				//receive find request, advertise myself
-				mBackgroundHandler.sendEmptyMessage(0);
+				mBackgroundHandler.sendEmptyMessage(ADVERTISE_MESSAGE);
 			} else if (content.startsWith(ADVERTISE)) {
 				String[] names = content.split(File.separator);
 				if (names.length > 1) {
@@ -258,6 +264,7 @@ public class AdvertiseService extends Service {
 					mServerMap.put(names[1], packetIpAddress);
 					if(mCallback!=null){
 						mCallback.serverFound(names[1]);
+						mBackgroundHandler.removeMessages(FIND_MESSAGE);
 					}
 				}
 			}

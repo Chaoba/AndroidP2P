@@ -36,7 +36,6 @@ public class ServerService extends FatherService {
 	private static final int BEGIN_LISTENING_MESSAGE = 0;
 	private static final int BEGIN_LISTENING_FILE = 0;
 
-	
 	private Context mContext;
 	private ServerSocket mMessageSever, mFileServer;
 	private HandlerThread mBackgroundHandlerThread;
@@ -83,9 +82,9 @@ public class ServerService extends FatherService {
 
 		@Override
 		public void sendFiles(ArrayList<String> filePaths) {
-			Message msg=mBackgroundHandler.obtainMessage();
-			msg.obj=filePaths.get(0);
-			msg.what=SEND_FILE;
+			Message msg = mBackgroundHandler.obtainMessage();
+			msg.obj = filePaths.get(0);
+			msg.what = SEND_FILE;
 			mBackgroundHandler.sendMessage(msg);
 
 		}
@@ -146,7 +145,7 @@ public class ServerService extends FatherService {
 			switch (msg.what) {
 			case OPEN_SERVER_MESSAGE:
 				createMessageServer(Util.MESSAGE_PORT);
-				if((Boolean) msg.obj){
+				if ((Boolean) msg.obj) {
 					createFileServer(Util.FILE_PORT);
 				}
 				break;
@@ -202,7 +201,7 @@ public class ServerService extends FatherService {
 			Logger.d(TAG, "handlemsessage:" + msg.what);
 			switch (msg.what) {
 			case BEGIN_LISTENING_FILE:
-				 beginListeningFile();
+				beginListeningFile();
 				break;
 			default:
 				break;
@@ -257,7 +256,7 @@ public class ServerService extends FatherService {
 				Logger.d(TAG, "close");
 				socket.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Logger.d(TAG,"message server stop");
 				listening = false;
 			}
 		}
@@ -284,7 +283,7 @@ public class ServerService extends FatherService {
 				Logger.d(TAG, "close");
 				socket.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				Logger.d(TAG,"file server stop");
 				listening = false;
 			}
 		}
@@ -302,6 +301,7 @@ public class ServerService extends FatherService {
 
 	@Override
 	protected void startSendMessage(String message) {
+		Logger.d(TAG,"startSendMessage:"+message);
 		Message msg = mBackgroundHandler.obtainMessage();
 		msg.what = SEND_MESSAGE;
 		msg.obj = message;

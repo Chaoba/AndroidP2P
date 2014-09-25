@@ -1,3 +1,5 @@
 /bin/
 /gen/
-/test/bin/
+test/bin/
+/test/gen/
+.gitignore

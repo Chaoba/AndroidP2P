@@ -90,11 +90,13 @@ public class ClientService extends FatherService {
 				connectToFileSocket(mIp, mFileServerPort);
 			case SEND_MESSAGE:
 				String s = (String) msg.obj;
-				try {
-					mMessageOutputStream.write(s.getBytes());
-					mMessageOutputStream.flush();
-				} catch (IOException e) {
-					Logger.e(TAG, "send message error:" + s);
+				if (s != null) {
+					try {
+						mMessageOutputStream.write(s.getBytes());
+						mMessageOutputStream.flush();
+					} catch (IOException e) {
+						Logger.e(TAG, "send message error:" + s);
+					}
 				}
 				break;
 			case SEND_FILE:
@@ -253,7 +255,7 @@ public class ClientService extends FatherService {
 		int n = 0;
 		while (listening) {
 			try {
-				Logger.d(TAG, "listening:");
+				Logger.d(TAG, "listening file:");
 				while (!mFileClient.isClosed()) {
 					n = mFileInputStream.read(buffer);
 					Logger.d(TAG, "read mFileInputStream n:" + n);
@@ -289,6 +291,7 @@ public class ClientService extends FatherService {
 
 	@Override
 	protected void startSendMessage(String message) {
+		Logger.d(TAG, "start send message:" + message);
 		Message msg = mBackgroundHandler.obtainMessage();
 		msg.what = SEND_MESSAGE;
 		msg.obj = message;

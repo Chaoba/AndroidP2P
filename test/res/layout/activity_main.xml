@@ -59,11 +59,27 @@
             android:layout_marginTop="10dp"
             android:text="Send Message" />
 
+        <Button
+            android:id="@+id/send_file"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/send"
+            android:layout_marginTop="10dp"
+            android:text="Send File" />
+
+        <TextView
+            android:id="@+id/percent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/send_file"
+            android:layout_marginTop="10dp"
+            android:text="percent" />
+
         <TextView
             android:id="@+id/log"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/send"
+            android:layout_below="@id/percent"
             android:layout_marginTop="10dp"
             android:text="History" />
     </RelativeLayout>

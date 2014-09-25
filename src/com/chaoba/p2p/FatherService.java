@@ -47,12 +47,13 @@ public abstract class FatherService extends Service {
 	}
 
 	protected void startSendFile(String filePath) {
+		Logger.d(TAG,"startSendFile:"+filePath);
 		File file = new File(filePath);
 		if (!file.exists()) {
 			return;
 		}
 		mCurrentFileName = filePath;
-		mCurrentFileSize=file.length();
+		mCurrentFileSize = file.length();
 		try {
 			mFileInPutStream = new FileInputStream(file);
 		} catch (FileNotFoundException e) {
@@ -60,7 +61,7 @@ public abstract class FatherService extends Service {
 		}
 		String name = file.getName();
 		// tell the target will send file and file info
-		startSendMessage(name + File.separator + file.length());
+		startSendMessage(Util.SEND_FILE_COMMAND+name + File.separator + file.length());
 	}
 
 	/**
@@ -74,10 +75,11 @@ public abstract class FatherService extends Service {
 		boolean handled = false;
 		if (message.startsWith(Util.SEND_FILE_COMMAND)) {
 			handled = true;
-			if (prepareToReceiveFile(message)) {
+			if (prepareToReceiveFile(message.substring(11, message.length()))) {
 				startSendMessage(Util.READY_RECEIVE_FILE_COMMAND);
 			}
 		} else if (message.startsWith(Util.READY_RECEIVE_FILE_COMMAND)) {
+			handled = true;
 			mSendFileHandler.sendEmptyMessage(SEND_FILE_MESSAGE);
 		}
 		return handled;
@@ -86,10 +88,11 @@ public abstract class FatherService extends Service {
 	protected void handleReceivedFile(byte[] buffer, int size) {
 		mCurrentSRFileSize += size;
 		int percent = (int) (mCurrentSRFileSize * 100 / mCurrentFileSize);
+		Logger.d(TAG,"mCurrentSRFileSize:"+mCurrentSRFileSize+" ::prcent"+percent);
 		updateFilePercent(mCurrentFileName, percent);
 		try {
 			mFileOutPutStream.write(buffer, 0, size);
-			if(percent==100){
+			if (percent == 100) {
 				mFileOutPutStream.close();
 			}
 		} catch (IOException e) {
@@ -98,7 +101,7 @@ public abstract class FatherService extends Service {
 			} catch (IOException e1) {
 			}
 		}
-		
+
 	}
 
 	public class SendFileHandler extends Handler {
@@ -113,15 +116,18 @@ public abstract class FatherService extends Service {
 			switch (msg.what) {
 			case SEND_FILE_MESSAGE:
 				byte[] buffer = new byte[Util.FILE_BUFFER_SIZE];
+				mCurrentSRFileSize=0;
 				while (true) {
 					try {
 						int n = mFileInPutStream.read(buffer);
 						if (n > 0) {
 							getOutputStream().write(buffer, 0, n);
+							getOutputStream().flush();
 							mCurrentSRFileSize += n;
+							Logger.d(TAG,"mCurrentSRFileSize:"+mCurrentSRFileSize+"::n:"+n);
 							int percent = (int) (mCurrentSRFileSize * 100 / mCurrentFileSize);
 							updateFilePercent(mCurrentFileName, percent);
-							if(percent==100){
+							if (percent == 100) {
 								mFileInPutStream.close();
 								break;
 							}
@@ -141,6 +147,7 @@ public abstract class FatherService extends Service {
 	}
 
 	private boolean prepareToReceiveFile(String s) {
+		Logger.d(TAG,"prepareToReceiveFile:"+s);
 		// fileName/fileSize
 		String[] command = s.split(File.separator);
 		boolean sdCardExist = Environment.getExternalStorageState().equals(
@@ -150,10 +157,11 @@ public abstract class FatherService extends Service {
 			File path = new File(mSdCardDir.getAbsolutePath() + File.separator
 					+ Util.SAVE_PATH);
 			if (!path.exists()) {
-				path.mkdir();
+				if(!path.mkdir()){
+					path=mSdCardDir;
+				}
 			}
-			mCurrentFileName = mSdCardDir.getAbsolutePath() + File.separator
-					+ Util.SAVE_PATH + command[0];
+			mCurrentFileName =path.getAbsolutePath() + File.separator+command[0];
 			mCurrentFileSize = Integer.valueOf(command[1]);
 			mCurrentSRFileSize = 0;
 			File receiveFile = Util.getSaveFile(mCurrentFileName);
@@ -172,6 +180,7 @@ public abstract class FatherService extends Service {
 
 	/**
 	 * notify currently send/received file percent
+	 * 
 	 * @param fileName
 	 * @param percent
 	 */
@@ -179,12 +188,14 @@ public abstract class FatherService extends Service {
 
 	/**
 	 * get the outputStream which can send stream to another peer;
+	 * 
 	 * @return
 	 */
 	protected abstract OutputStream getOutputStream();
 
 	/**
 	 * send message to another peer;
+	 * 
 	 * @param message
 	 */
 	protected abstract void startSendMessage(String message);

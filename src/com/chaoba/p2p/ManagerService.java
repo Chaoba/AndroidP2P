@@ -45,6 +45,7 @@ public class ManagerService extends Service implements IServerServiceCallback,
 	private boolean isServer, mBindServer, mBindAdvertise, mBindClient;
 	private Iterator<String> mFilesToSent;
 	public boolean mOpenFileServer;
+	public boolean mConnectFileServer;
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -54,11 +55,11 @@ public class ManagerService extends Service implements IServerServiceCallback,
 
 	public class ManagerServiceBinder extends Binder implements IManagerService {
 		@Override
-		public void startServer(String serverName,boolean openFileServer) {
+		public void startServer(String serverName, boolean openFileServer) {
 			Logger.d(TAG, "startserver:" + serverName);
 			isServer = true;
 			mServerName = serverName;
-			mOpenFileServer=openFileServer;
+			mOpenFileServer = openFileServer;
 			bindServerService();
 			bindAdvertiseService();
 		}
@@ -76,9 +77,10 @@ public class ManagerService extends Service implements IServerServiceCallback,
 		}
 
 		@Override
-		public void connectServer(String serverName,boolean connectFileServer) {
+		public void connectServer(String serverName, boolean connectFileServer) {
 			isServer = false;
 			mServerNameToConnect = serverName;
+			mConnectFileServer = connectFileServer;
 			bindClientService();
 
 		}
@@ -186,6 +188,7 @@ public class ManagerService extends Service implements IServerServiceCallback,
 	public void sendNextFile() {
 		if (mFilesToSent.hasNext()) {
 			String filePath = mFilesToSent.next();
+			Logger.d(TAG, "send next file:" + filePath);
 			ArrayList<String> file = new ArrayList<String>();
 			file.add(filePath);
 			if (isServer) {
@@ -193,6 +196,8 @@ public class ManagerService extends Service implements IServerServiceCallback,
 			} else {
 				mClientServiceBinder.sendFiles(file);
 			}
+		} else {
+			mFilesToSent = null;
 		}
 
 	}
@@ -275,7 +280,11 @@ public class ManagerService extends Service implements IServerServiceCallback,
 		if (mClientServiceBinder != null) {
 			String ip = mServerMap.get(serverName);
 			if (ip != null) {
-				mClientServiceBinder.connectMessageServer(ip, Util.MESSAGE_PORT);
+				mClientServiceBinder
+						.connectMessageServer(ip, Util.MESSAGE_PORT);
+				if (mConnectFileServer) {
+					mClientServiceBinder.connectFileServer(ip, Util.FILE_PORT);
+				}
 			}
 		}
 	}
@@ -312,23 +321,28 @@ public class ManagerService extends Service implements IServerServiceCallback,
 		mCallback.updateServer(serverName);
 	}
 
-
 	@Override
 	public void connectToServer() {
 		mCallback.connectToServer();
-
+		if (mBindAdvertise) {
+			unbindService(mAdvertiseServiceConnection);
+			mBindAdvertise=false;
+		}
 	}
 
 	@Override
 	public void acceptClient() {
 		mCallback.acceptClient();
-
+		if (mBindAdvertise) {
+			unbindService(mAdvertiseServiceConnection);
+			mBindAdvertise=false;
+		}
 	}
 
 	@Override
 	public void updateFilePercent(String FileName, int percent) {
 		mCallback.updateFilePercent(FileName, percent);
-		if (percent == 100) {
+		if (percent == 100 && mFilesToSent != null) {
 			sendNextFile();
 		}
 	}

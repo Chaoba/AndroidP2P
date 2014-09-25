@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">P2Ptest</string>
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">Quit</string>
     <string name="hello_world">Hello world!</string>
 
 </resources>

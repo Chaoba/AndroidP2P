@@ -1,6 +1,7 @@
 package com.chaoba.p2p.utils;
 
 import java.io.File;
+import java.io.IOException;
 
 import android.content.Context;
 import android.net.wifi.WifiInfo;
@@ -14,7 +15,7 @@ public class Util {
 	
 	public static final int BUFFER_SIZE = 1024 * 4;
 	public static final int FILE_BUFFER_SIZE = BUFFER_SIZE*10;
-	public static final int SEND_MESSAGE_DELAY=200;
+	public static final int SEND_MESSAGE_DELAY=300;
 	
 	public static final String SEND_FILE_COMMAND="$SEND_FILE&";
 	public static final String READY_RECEIVE_FILE_COMMAND="$READY&";
@@ -70,6 +71,11 @@ public class Util {
 				buffer.append(extension);
 				file = new File(buffer.toString());
 			} while (file.exists());
+		}
+		try {
+			file.createNewFile();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		return file;
 	}
