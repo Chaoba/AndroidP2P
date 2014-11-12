@@ -89,6 +89,12 @@ public class ServerService extends FatherService {
 
 		}
 
+		@Override
+		public void close() {
+			// TODO Auto-generated method stub
+			
+		}
+
 	}
 
 	@Override

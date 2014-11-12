@@ -114,6 +114,12 @@ public class ManagerService extends Service implements IServerServiceCallback,
 			sendNextFile();
 		}
 
+		@Override
+		public void close() {
+			// TODO Auto-generated method stub
+			
+		}
+
 	};
 
 	@Override

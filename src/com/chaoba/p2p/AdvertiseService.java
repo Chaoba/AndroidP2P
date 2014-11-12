@@ -23,7 +23,6 @@ import android.text.TextUtils;
 import com.chaoba.p2p.interf.IAdvertiseService;
 import com.chaoba.p2p.interf.IAdvertiseServiceCallback;
 import com.chaoba.p2p.utils.Logger;
-import com.chaoba.p2p.utils.Util;
 
 public class AdvertiseService extends Service {
 	private static final String TAG = "AdvertiseService";

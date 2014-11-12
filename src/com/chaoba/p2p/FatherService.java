@@ -47,7 +47,7 @@ public abstract class FatherService extends Service {
 	}
 
 	protected void startSendFile(String filePath) {
-		Logger.d(TAG,"startSendFile:"+filePath);
+		Logger.d(TAG, "startSendFile:" + filePath);
 		File file = new File(filePath);
 		if (!file.exists()) {
 			return;
@@ -61,7 +61,8 @@ public abstract class FatherService extends Service {
 		}
 		String name = file.getName();
 		// tell the target will send file and file info
-		startSendMessage(Util.SEND_FILE_COMMAND+name + File.separator + file.length());
+		startSendMessage(Util.SEND_FILE_COMMAND + name + File.separator
+				+ file.length());
 	}
 
 	/**
@@ -88,7 +89,8 @@ public abstract class FatherService extends Service {
 	protected void handleReceivedFile(byte[] buffer, int size) {
 		mCurrentSRFileSize += size;
 		int percent = (int) (mCurrentSRFileSize * 100 / mCurrentFileSize);
-		Logger.d(TAG,"mCurrentSRFileSize:"+mCurrentSRFileSize+" ::prcent"+percent);
+		Logger.d(TAG, "mCurrentSRFileSize:" + mCurrentSRFileSize + " ::prcent"
+				+ percent);
 		updateFilePercent(mCurrentFileName, percent);
 		try {
 			mFileOutPutStream.write(buffer, 0, size);
@@ -115,16 +117,19 @@ public abstract class FatherService extends Service {
 			Logger.d(TAG, "handlemsessage:" + msg.what);
 			switch (msg.what) {
 			case SEND_FILE_MESSAGE:
+				long startTime = System.currentTimeMillis();
 				byte[] buffer = new byte[Util.FILE_BUFFER_SIZE];
-				mCurrentSRFileSize=0;
+				mCurrentSRFileSize = 0;
+				OutputStream out = getOutputStream();
 				while (true) {
 					try {
 						int n = mFileInPutStream.read(buffer);
 						if (n > 0) {
-							getOutputStream().write(buffer, 0, n);
-							getOutputStream().flush();
+							out.write(buffer, 0, n);
+							out.flush();
 							mCurrentSRFileSize += n;
-							Logger.d(TAG,"mCurrentSRFileSize:"+mCurrentSRFileSize+"::n:"+n);
+							Logger.d(TAG, "mCurrentSRFileSize:"
+									+ mCurrentSRFileSize + "::n:" + n);
 							int percent = (int) (mCurrentSRFileSize * 100 / mCurrentFileSize);
 							updateFilePercent(mCurrentFileName, percent);
 							if (percent == 100) {
@@ -139,6 +144,13 @@ public abstract class FatherService extends Service {
 						break;
 					}
 				}
+
+				double useTime = (System.currentTimeMillis() - startTime) / 1000;
+				Logger.d(TAG, "send time:"
+						+ (System.currentTimeMillis() - startTime));
+				Logger.d(TAG, "send speed:"
+						+ (mCurrentFileSize / 1024 / 1024 / useTime) + ",size:"
+						+ (mCurrentFileSize / 1024 / 1024));
 				break;
 			default:
 				break;
@@ -147,7 +159,7 @@ public abstract class FatherService extends Service {
 	}
 
 	private boolean prepareToReceiveFile(String s) {
-		Logger.d(TAG,"prepareToReceiveFile:"+s);
+		Logger.d(TAG, "prepareToReceiveFile:" + s);
 		// fileName/fileSize
 		String[] command = s.split(File.separator);
 		boolean sdCardExist = Environment.getExternalStorageState().equals(
@@ -157,11 +169,12 @@ public abstract class FatherService extends Service {
 			File path = new File(mSdCardDir.getAbsolutePath() + File.separator
 					+ Util.SAVE_PATH);
 			if (!path.exists()) {
-				if(!path.mkdir()){
-					path=mSdCardDir;
+				if (!path.mkdir()) {
+					path = mSdCardDir;
 				}
 			}
-			mCurrentFileName =path.getAbsolutePath() + File.separator+command[0];
+			mCurrentFileName = path.getAbsolutePath() + File.separator
+					+ command[0];
 			mCurrentFileSize = Integer.valueOf(command[1]);
 			mCurrentSRFileSize = 0;
 			File receiveFile = Util.getSaveFile(mCurrentFileName);

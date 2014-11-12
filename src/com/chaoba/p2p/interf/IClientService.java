@@ -1,6 +1,6 @@
 package com.chaoba.p2p.interf;
 
-public interface IClientService extends IFatherService{
+public interface IClientService extends Sender{
 
 	public void connectMessageServer(String ip,int port);
 	public void connectFileServer(String ip,int port);

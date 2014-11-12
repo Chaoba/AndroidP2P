@@ -3,13 +3,10 @@ package com.chaoba.p2p;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 
-import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
@@ -18,7 +15,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 
-import com.chaoba.p2p.ServerService.MessageHandler;
 import com.chaoba.p2p.interf.IClientService;
 import com.chaoba.p2p.interf.IClientServiceCallback;
 import com.chaoba.p2p.utils.Logger;
@@ -194,6 +190,12 @@ public class ClientService extends FatherService {
 			msg.obj = filePaths.get(0);
 			msg.what = SEND_FILE;
 			mBackgroundHandler.sendMessage(msg);
+		}
+
+		@Override
+		public void close() {
+			// TODO Auto-generated method stub
+			
 		}
 
 	}

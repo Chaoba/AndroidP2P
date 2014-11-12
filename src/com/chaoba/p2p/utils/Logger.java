@@ -18,7 +18,7 @@ public class Logger {
 			if (st.getClassName().equals(Thread.class.getName())) {
 				continue;
 			}
-			if (st.getClassName().equals("cn.com.carsmart.lecheng.carshop.util.Logger")) {
+			if (st.getClassName().equals("com.chaoba.p2p.utils.Logger")) {
 				continue;
 			}
 			return "[Line: " + st.getLineNumber() + "] ";
