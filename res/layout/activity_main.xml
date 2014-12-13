@@ -13,57 +13,91 @@
         android:paddingTop="@dimen/activity_vertical_margin"
         tools:context=".MainActivity" >
 
-        <Button
-            android:id="@+id/create_server"
+        <LinearLayout
+            android:id="@+id/server_name_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="Create Server" />
+            android:orientation="horizontal" >
+
+            <EditText
+                android:id="@+id/server_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
+
+            <Button
+                android:id="@+id/set_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Set name" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/find"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/create_server"
+            android:layout_below="@id/server_name_layout"
             android:layout_marginTop="10dp"
-            android:text="Find server" />
+            android:text="Find peer" />
 
-        <EditText
-            android:id="@+id/server_name"
+        <LinearLayout
+            android:id="@+id/find_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/find"
             android:layout_marginTop="10dp"
-            android:editable="false" />
+            android:orientation="horizontal" >
 
-        <Button
-            android:id="@+id/connect_server"
+            <TextView
+                android:id="@+id/peer_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1"
+                android:editable="false" />
+
+            <Button
+                android:id="@+id/connect_peer"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1"
+                android:text="Connect peer" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/sned_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/server_name"
+            android:layout_below="@id/find_layout"
             android:layout_marginTop="10dp"
-            android:text="Connect Server" />
+            android:orientation="horizontal" >
 
-        <EditText
-            android:id="@+id/message_edit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/connect_server"
-            android:layout_marginTop="10dp" />
+            <EditText
+                android:id="@+id/message_edit"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="test message"
+                android:layout_weight="1" />
 
-        <Button
-            android:id="@+id/send"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/message_edit"
-            android:layout_marginTop="10dp"
-            android:text="Send Message" />
+            <Button
+                android:id="@+id/send"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/message_edit"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1"
+                android:text="Send Message" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/send_file"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/send"
+            android:layout_below="@id/sned_layout"
             android:layout_marginTop="10dp"
             android:text="Send File" />
 

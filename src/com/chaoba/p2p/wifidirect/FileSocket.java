@@ -16,10 +16,10 @@ import java.util.ArrayList;
 import android.os.Environment;
 import android.util.Log;
 
-import com.chaoba.p2p.interf.FileSender;
-import com.chaoba.p2p.interf.Receiver;
 import com.chaoba.p2p.utils.Logger;
 import com.chaoba.p2p.utils.Util;
+import com.chaoba.p2p.wifidirect.interf.FileSender;
+import com.chaoba.p2p.wifidirect.interf.Receiver;
 
 public class FileSocket implements FileSender {
 	private static final String TAG = "FileSocket";
@@ -82,6 +82,7 @@ public class FileSocket implements FileSender {
 		while (!socket.isClosed()) {
 			n = input.read(buffer);
 			Logger.d(TAG, "read input n:" + n);
+			if(n>0)
 			handleReceivedFile(buffer, n);
 		}
 	}
@@ -128,7 +129,7 @@ public class FileSocket implements FileSender {
 				Logger.e(TAG, e);
 			}
 
-			 calculateTime();
+			calculateTime();
 		} else {
 			Logger.d(TAG, "file not exist");
 		}
@@ -162,7 +163,7 @@ public class FileSocket implements FileSender {
 					path = mSdCardDir;
 				}
 			}
-			mCurrentSRFileSize=0;
+			mCurrentSRFileSize = 0;
 			mCurrentFileName = path.getAbsolutePath() + File.separator
 					+ fileName;
 			mCurrentFileSize = fileSize;
@@ -205,10 +206,13 @@ public class FileSocket implements FileSender {
 		useTime = (System.currentTimeMillis() - startTime) / 1000;
 		if (useTime > 0) {
 			Logger.d(TAG, "send time:"
-					+ (System.currentTimeMillis() - startTime)+"ms");
-			Logger.d(TAG, "send speed:"
-					+ ((double)mCurrentFileSize / 1024 / 1024 / (double)useTime) + "M/s,size:"
-					+ ((double)mCurrentFileSize / 1024 / 1024)+"M");
+					+ (System.currentTimeMillis() - startTime) + "ms");
+			Logger.d(
+					TAG,
+					"send speed:"
+							+ ((double) mCurrentFileSize / 1024 / 1024 / (double) useTime)
+							+ "M/s,size:"
+							+ ((double) mCurrentFileSize / 1024 / 1024) + "M");
 		}
 	}
 }

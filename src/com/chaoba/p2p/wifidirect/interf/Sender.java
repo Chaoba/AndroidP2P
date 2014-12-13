@@ -1,4 +1,4 @@
-package com.chaoba.p2p.interf;
+package com.chaoba.p2p.wifidirect.interf;
 
 import java.util.ArrayList;
 

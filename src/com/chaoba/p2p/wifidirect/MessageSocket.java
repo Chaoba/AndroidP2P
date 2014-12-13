@@ -11,10 +11,10 @@ import java.util.ArrayList;
 
 import android.util.Log;
 
-import com.chaoba.p2p.interf.Receiver;
-import com.chaoba.p2p.interf.Sender;
 import com.chaoba.p2p.utils.Logger;
 import com.chaoba.p2p.utils.Util;
+import com.chaoba.p2p.wifidirect.interf.Receiver;
+import com.chaoba.p2p.wifidirect.interf.Sender;
 
 public class MessageSocket implements Sender {
 	private static final String TAG = "ServerSocketThread";
@@ -71,8 +71,10 @@ public class MessageSocket implements Sender {
 		while (!socket.isClosed()) {
 			n = input.read(buffer);
 			Logger.d(TAG, "read input n:" + n);
+			if(n>0){
 			String s = new String(buffer, 0, n);
 			mReceiver.onReceiveMessage(s);
+			}
 		}
 	}
 

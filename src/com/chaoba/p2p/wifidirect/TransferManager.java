@@ -8,11 +8,11 @@ import android.net.wifi.p2p.WifiP2pInfo;
 import android.os.Environment;
 import android.util.Log;
 
-import com.chaoba.p2p.interf.FileSender;
-import com.chaoba.p2p.interf.Receiver;
-import com.chaoba.p2p.interf.Sender;
 import com.chaoba.p2p.utils.Logger;
 import com.chaoba.p2p.utils.MessageBean;
+import com.chaoba.p2p.wifidirect.interf.FileSender;
+import com.chaoba.p2p.wifidirect.interf.Receiver;
+import com.chaoba.p2p.wifidirect.interf.Sender;
 import com.google.gson.Gson;
 
 public class TransferManager implements Receiver, Sender {
@@ -63,7 +63,7 @@ public class TransferManager implements Receiver, Sender {
 	}
 
 	public void sendNextFile() {
-		if (mFilesIterrator.hasNext()) {
+		if (mFilesIterrator!=null&&mFilesIterrator.hasNext()) {
 			mCurrentFilePath = mFilesIterrator.next();
 			Logger.d(TAG, "send next file:" + mCurrentFilePath);
 			File f = new File(mCurrentFilePath);
@@ -121,7 +121,9 @@ public class TransferManager implements Receiver, Sender {
 	@Override
 	public void onFilePercentUpdated(String fileName, int percent) {
 		mReceiver.onFilePercentUpdated(fileName, percent);
-
+		if(percent==100){
+			sendNextFile();
+		}
 	}
 
 	@Override

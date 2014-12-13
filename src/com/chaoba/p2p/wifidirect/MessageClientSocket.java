@@ -10,10 +10,10 @@ import java.util.ArrayList;
 
 import android.util.Log;
 
-import com.chaoba.p2p.interf.Receiver;
-import com.chaoba.p2p.interf.Sender;
 import com.chaoba.p2p.utils.Logger;
 import com.chaoba.p2p.utils.Util;
+import com.chaoba.p2p.wifidirect.interf.Receiver;
+import com.chaoba.p2p.wifidirect.interf.Sender;
 
 public class MessageClientSocket implements Sender {
 	private static final String TAG = "ClientSocketThread";

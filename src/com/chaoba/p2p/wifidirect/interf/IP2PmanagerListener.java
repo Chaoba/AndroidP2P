@@ -1,10 +1,9 @@
 package com.chaoba.p2p.wifidirect.interf;
 
-import com.chaoba.p2p.interf.Receiver;
 
 
 public interface IP2PmanagerListener  extends Receiver{
-	public void onServerFound(String serverName);
+	public void onServerFound(String serverName,boolean isSelf);
 
 	public void onServerCreated();
 

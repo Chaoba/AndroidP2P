@@ -46,7 +46,7 @@ public class ConnectionManagerImpl implements ConnectionManager,
 	private WiFiDirectBroadcastReceiver receiver;
 	private WifiP2pDnsSdServiceRequest serviceRequest;
 	private IP2PmanagerListener mListener;
-	private Map<String, WiFiP2pService> mServerMap = new HashMap<String, WiFiP2pService>();
+	private Map<String, WiFiP2PDeviceInstance> mServerMap = new HashMap<String, WiFiP2PDeviceInstance>();
 	public TransferManager mTransferManager;
 
 	public ConnectionManagerImpl(Context c, IP2PmanagerListener listener) {
@@ -73,14 +73,14 @@ public class ConnectionManagerImpl implements ConnectionManager,
 	}
 
 	@Override
-	public void createServer(String name) {
-		setDeviceName("test");
+	public void setName(String name) {
+		setDeviceName(name);
 		// startRegistration(name);
 		// discoverService();
 	}
 
 	@Override
-	public void findServer() {
+	public void findPeer() {
 		startRegistration(null);
 		discoverService();
 
@@ -88,7 +88,7 @@ public class ConnectionManagerImpl implements ConnectionManager,
 
 	@Override
 	public void connectServer(String name) {
-		WiFiP2pService service = mServerMap.get(name);
+		WiFiP2PDeviceInstance service = mServerMap.get(name);
 		connectP2p(service);
 
 	}
@@ -149,7 +149,7 @@ public class ConnectionManagerImpl implements ConnectionManager,
 		manager.discoverServices(channel, new DiscoverServicesListener());
 	}
 
-	public void connectP2p(WiFiP2pService service) {
+	public void connectP2p(WiFiP2PDeviceInstance service) {
 		WifiP2pConfig config = new WifiP2pConfig();
 		config.deviceAddress = service.device.deviceAddress;
 		config.wps.setup = WpsInfo.PBC;
@@ -167,12 +167,12 @@ public class ConnectionManagerImpl implements ConnectionManager,
 			Logger.d(TAG, "find instanceName:" + instanceName);
 			if (instanceName.equalsIgnoreCase(SERVICE_INSTANCE)) {
 				Logger.d(TAG, "onBonjourServiceAvailable " + instanceName);
-				WiFiP2pService service = new WiFiP2pService();
+				WiFiP2PDeviceInstance service = new WiFiP2PDeviceInstance();
 				service.device = srcDevice;
 				service.instanceName = instanceName;
 				service.serviceRegistrationType = registrationType;
 				mServerMap.put(srcDevice.deviceName, service);
-				mListener.onServerFound(srcDevice.deviceName);
+				mListener.onServerFound(srcDevice.deviceName,false);
 			}
 
 		}
@@ -195,6 +195,7 @@ public class ConnectionManagerImpl implements ConnectionManager,
 
 		@Override
 		public void onConnectionInfoAvailable(WifiP2pInfo info) {
+			if(mTransferManager==null)
 			mTransferManager = new TransferManager(mListener, info);
 		}
 
@@ -310,7 +311,7 @@ public class ConnectionManagerImpl implements ConnectionManager,
 				WifiP2pDevice device = (WifiP2pDevice) intent
 						.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
 				Log.d(TAG, "Device status -" + device.status);
-
+				mListener.onServerFound(device.deviceName,true);
 			}
 		}
 
